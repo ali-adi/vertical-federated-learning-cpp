@@ -1,0 +1,3 @@
+/Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/build/CMakeFiles/vfl_main.dir
+/Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/build/CMakeFiles/edit_cache.dir
+/Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/build/CMakeFiles/rebuild_cache.dir

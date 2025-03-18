@@ -1,0 +1,31 @@
+==================== RUN DETAILS ====================
+
+Hyperparameters:
+------------------------------------------------------
+csv_path: /Users/ali/root/University/Y4S2/DTC/VFL_CPP_Project/data/default_of_credit_card_clients-balanced.csv
+num_csv_columns: 25
+feature_start: 1
+num_features_csv: 23
+target_index: 24
+train_ratio: 0.7
+val_ratio: 0.15
+test_ratio: 0.15
+batch_size: 128
+split_col (left branch features): 6
+left_input_dim: 6
+right_input_dim: 17
+left_output_dim: 64
+right_output_dim: 64
+aggregator_input_dim: 128
+aggregator_output_dim: 1
+num_epochs: 600
+learning_rate: 0.001
+
+Final Metrics:
+------------------------------------------------------
+Train Accuracy: 74.5789%
+Validation Accuracy: 71.879%
+Test Accuracy: 72.0257%
+Test Loss: 3.70454
+Best Validation Accuracy: 71.879%
+======================================================
