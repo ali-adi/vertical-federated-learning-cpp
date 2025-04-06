@@ -4,7 +4,7 @@
 # compile CXX with /Library/Developer/CommandLineTools/usr/bin/c++
 CXX_DEFINES = -DUSE_C10D_GLOO -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE
 
-CXX_INCLUDES = -I/Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/include -isystem /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/libtorch/include -isystem /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/libtorch/include/torch/csrc/api/include
+CXX_INCLUDES = -I/opt/homebrew/include/eigen3 -I/Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/include -isystem /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/libtorch/include -isystem /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/libtorch/include/torch/csrc/api/include
 
 CXX_FLAGSarm64 = -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk
 

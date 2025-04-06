@@ -8,8 +8,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/src/DataUtils.cpp" "CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o" "gcc" "CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o.d"
-  "/Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/src/main.cpp" "CMakeFiles/vfl_main.dir/src/main.cpp.o" "gcc" "CMakeFiles/vfl_main.dir/src/main.cpp.o.d"
+  "/Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/src/DataUtils.cpp" "CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o" "gcc" "CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o.d"
+  "/Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/src/main.cpp" "CMakeFiles/vfl_main.dir/src/main.cpp.o" "gcc" "CMakeFiles/vfl_main.dir/src/main.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

@@ -53,10 +53,10 @@ RM = /opt/homebrew/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project
+CMAKE_SOURCE_DIR = /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/build
+CMAKE_BINARY_DIR = /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/vfl_main.dir/depend.make
@@ -73,32 +73,32 @@ CMakeFiles/vfl_main.dir/codegen:
 .PHONY : CMakeFiles/vfl_main.dir/codegen
 
 CMakeFiles/vfl_main.dir/src/main.cpp.o: CMakeFiles/vfl_main.dir/flags.make
-CMakeFiles/vfl_main.dir/src/main.cpp.o: /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/src/main.cpp
+CMakeFiles/vfl_main.dir/src/main.cpp.o: /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/src/main.cpp
 CMakeFiles/vfl_main.dir/src/main.cpp.o: CMakeFiles/vfl_main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/vfl_main.dir/src/main.cpp.o"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/vfl_main.dir/src/main.cpp.o -MF CMakeFiles/vfl_main.dir/src/main.cpp.o.d -o CMakeFiles/vfl_main.dir/src/main.cpp.o -c /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/src/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/vfl_main.dir/src/main.cpp.o"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/vfl_main.dir/src/main.cpp.o -MF CMakeFiles/vfl_main.dir/src/main.cpp.o.d -o CMakeFiles/vfl_main.dir/src/main.cpp.o -c /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/src/main.cpp
 
 CMakeFiles/vfl_main.dir/src/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vfl_main.dir/src/main.cpp.i"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/src/main.cpp > CMakeFiles/vfl_main.dir/src/main.cpp.i
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/src/main.cpp > CMakeFiles/vfl_main.dir/src/main.cpp.i
 
 CMakeFiles/vfl_main.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vfl_main.dir/src/main.cpp.s"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/src/main.cpp -o CMakeFiles/vfl_main.dir/src/main.cpp.s
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/src/main.cpp -o CMakeFiles/vfl_main.dir/src/main.cpp.s
 
 CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o: CMakeFiles/vfl_main.dir/flags.make
-CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o: /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/src/DataUtils.cpp
+CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o: /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/src/DataUtils.cpp
 CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o: CMakeFiles/vfl_main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o -MF CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o.d -o CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o -c /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/src/DataUtils.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o -MF CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o.d -o CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o -c /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/src/DataUtils.cpp
 
 CMakeFiles/vfl_main.dir/src/DataUtils.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vfl_main.dir/src/DataUtils.cpp.i"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/src/DataUtils.cpp > CMakeFiles/vfl_main.dir/src/DataUtils.cpp.i
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/src/DataUtils.cpp > CMakeFiles/vfl_main.dir/src/DataUtils.cpp.i
 
 CMakeFiles/vfl_main.dir/src/DataUtils.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vfl_main.dir/src/DataUtils.cpp.s"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/src/DataUtils.cpp -o CMakeFiles/vfl_main.dir/src/DataUtils.cpp.s
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/src/DataUtils.cpp -o CMakeFiles/vfl_main.dir/src/DataUtils.cpp.s
 
 # Object files for target vfl_main
 vfl_main_OBJECTS = \
@@ -111,13 +111,13 @@ vfl_main_EXTERNAL_OBJECTS =
 vfl_main: CMakeFiles/vfl_main.dir/src/main.cpp.o
 vfl_main: CMakeFiles/vfl_main.dir/src/DataUtils.cpp.o
 vfl_main: CMakeFiles/vfl_main.dir/build.make
-vfl_main: /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/libtorch/lib/libc10.dylib
-vfl_main: /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/libtorch/lib/libkineto.a
-vfl_main: /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/libtorch/lib/libtorch.dylib
-vfl_main: /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/libtorch/lib/libtorch_cpu.dylib
-vfl_main: /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/libtorch/lib/libc10.dylib
+vfl_main: /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/libtorch/lib/libc10.dylib
+vfl_main: /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/libtorch/lib/libkineto.a
+vfl_main: /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/libtorch/lib/libtorch.dylib
+vfl_main: /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/libtorch/lib/libtorch_cpu.dylib
+vfl_main: /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/libtorch/lib/libc10.dylib
 vfl_main: CMakeFiles/vfl_main.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable vfl_main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable vfl_main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/vfl_main.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -129,6 +129,6 @@ CMakeFiles/vfl_main.dir/clean:
 .PHONY : CMakeFiles/vfl_main.dir/clean
 
 CMakeFiles/vfl_main.dir/depend:
-	cd /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/build /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/build /Users/ali/root/University/Y4S2/DTC/VFL-CPP-Project/build/CMakeFiles/vfl_main.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/build /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/build /Users/ali/root/University/Y4S2/DTC/vertical-federated-learning-cpp/build/CMakeFiles/vfl_main.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/vfl_main.dir/depend
 

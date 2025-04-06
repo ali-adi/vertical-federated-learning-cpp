@@ -8,35 +8,140 @@
 #include <iomanip>
 #include <filesystem>
 #include <cstdlib>
+#include <Eigen/Dense>
+#include <random>
 
 #include "DataUtils.h"
 #include "EvaluateUtils.h"
-#include "TrainUtils.h"
 #include "LocalModels.h"
 #include "VFLAggregator.h"
 #include "MyDataset.h"
 
-int main() {
+// Binary cross entropy loss function for Eigen matrices
+double bce_loss(const Eigen::MatrixXd& y_pred, const Eigen::MatrixXd& y_true) {
+    // Apply sigmoid to predictions
+    Eigen::MatrixXd probs = sigmoid(y_pred);
+    
+    // Calculate BCE loss: -y_true * log(probs) - (1 - y_true) * log(1 - probs)
+    double loss = 0.0;
+    int batch_size = y_pred.cols();
+    
+    // Add small epsilon to avoid log(0)
+    double epsilon = 1e-7;
+    
+    // Compute element-wise loss
+    for (int i = 0; i < batch_size; ++i) {
+        double y = y_true(0, i);
+        double p = std::max(std::min(probs(0, i), 1.0 - epsilon), epsilon);
+        loss += -y * std::log(p) - (1.0 - y) * std::log(1.0 - p);
+    }
+    
+    // Return average loss
+    return loss / batch_size;
+}
+
+// Gradient of binary cross entropy loss with respect to pre-sigmoid predictions
+Eigen::MatrixXd bce_loss_grad(const Eigen::MatrixXd& y_pred, const Eigen::MatrixXd& y_true) {
+    // Apply sigmoid to get probabilities
+    Eigen::MatrixXd probs = sigmoid(y_pred);
+    
+    // Compute gradient: probs - y_true
+    Eigen::MatrixXd grad = probs - y_true;
+    
+    return grad;
+}
+
+// Function to parse command line arguments
+std::string getArgValue(int argc, char** argv, const std::string& arg, const std::string& defaultValue) {
+    for (int i = 1; i < argc - 1; i++) {
+        if (std::string(argv[i]) == arg) {
+            return std::string(argv[i + 1]);
+        }
+    }
+    return defaultValue;
+}
+
+// Structure to store dataset configuration
+struct DatasetConfig {
+    std::string csv_path;
+    int num_csv_columns;
+    int feature_start;
+    int num_features_csv;
+    int target_index;
+};
+
+int main(int argc, char** argv) {
     std::cout << "=== VFL Simulation Start ===" << std::endl;
 
+    // Parse command line arguments
+    std::string dataset_name = getArgValue(argc, argv, "--data", "credit");
+    std::cout << "Using dataset: " << dataset_name << std::endl;
+
+    // Configure dataset based on name
+    DatasetConfig config;
+    bool is_neurips = false;
+
+    if (dataset_name == "credit") {
+        config.csv_path = "../data/credit/default_of_credit_card_clients.csv";
+        config.num_csv_columns = 25;
+        config.feature_start = 1; // First column is ID, skip it
+        config.num_features_csv = 23;
+        config.target_index = 24; // Last column
+    } else if (dataset_name == "credit-balanced") {
+        config.csv_path = "../data/credit/default_of_credit_card_clients-balanced.csv";
+        config.num_csv_columns = 25;
+        config.feature_start = 1; // First column is ID, skip it
+        config.num_features_csv = 23;
+        config.target_index = 24; // Last column
+    } else if (dataset_name.find("neurips") != std::string::npos) {
+        is_neurips = true;
+        // Determine which Neurips variant to use
+        std::string variant;
+        if (dataset_name == "neurips-base") {
+            variant = "Base";
+        } else if (dataset_name == "neurips-v1") {
+            variant = "Variant I";
+        } else if (dataset_name == "neurips-v2") {
+            variant = "Variant II";
+        } else if (dataset_name == "neurips-v3") {
+            variant = "Variant III";
+        } else if (dataset_name == "neurips-v4") {
+            variant = "Variant IV";
+        } else if (dataset_name == "neurips-v5") {
+            variant = "Variant V";
+        } else {
+            // Default to Base
+            variant = "Base";
+        }
+        
+        config.csv_path = "../data/neurips/" + variant + ".csv";
+        config.num_csv_columns = 32; // NeurIPS data has 32 columns
+        config.target_index = 0;     // First column for Neurips is target (fraud_bool)
+        config.feature_start = 1;    // Features start after target
+        config.num_features_csv = config.num_csv_columns - 1; // All columns except target
+    } else {
+        std::cerr << "Unknown dataset: " << dataset_name << ". Using default (credit)." << std::endl;
+        config.csv_path = "../data/credit/default_of_credit_card_clients.csv";
+        config.num_csv_columns = 25;
+        config.feature_start = 1;
+        config.num_features_csv = 23;
+        config.target_index = 24;
+    }
+
     // ==================== Hyperparameter Block ====================
-    const std::string csv_path = "/Users/ali/root/University/Y4S2/DTC/VFL_CPP_Project/data/default_of_credit_card_clients-balanced.csv";
-    const int num_csv_columns = 25;
-    const int feature_start = 1;
-    const int num_features_csv = 23;
-    const int target_index = 24;
     const double train_ratio = 0.7;
     const double val_ratio = 0.15;
     const double test_ratio = 0.15;
     const int64_t batch_size = 128;
-    const int64_t split_col = 6;
+    // Split column is half of features for all datasets
+    const int64_t split_col = config.num_features_csv / 2;
     const int64_t left_input_dim = split_col;
-    const int64_t right_input_dim = num_features_csv - split_col;
+    const int64_t right_input_dim = config.num_features_csv - split_col;
     const int64_t left_output_dim = 64;
     const int64_t right_output_dim = 64;
     const int64_t aggregator_input_dim = left_output_dim + right_output_dim;
     const int64_t aggregator_output_dim = 1;
-    const size_t num_epochs = 600;
+    const size_t num_epochs = 10;
     const double learning_rate = 0.001;
     // ================================================================
 
@@ -54,7 +159,8 @@ int main() {
     // ------------------------------
     // 1. Load CSV data.
     // ------------------------------
-    auto csv_data = loadCSV(csv_path);
+    std::cout << "Loading data from: " << config.csv_path << std::endl;
+    auto csv_data = loadCSV(config.csv_path);
     if (csv_data.empty()) {
         std::cerr << "ERROR: No data loaded from CSV." << std::endl;
         return -1;
@@ -65,44 +171,66 @@ int main() {
     // ------------------------------
     std::vector<std::vector<float>> feature_rows;
     std::vector<float> labels;
+    
     for (const auto &row : csv_data) {
-        if (row.size() != num_csv_columns) continue;
-        std::vector<float> features;
-        for (int j = feature_start; j < feature_start + num_features_csv; j++) {
-            try { features.push_back(std::stof(row[j])); }
-            catch (...) { features.push_back(0.0f); }
+        if (row.size() != config.num_csv_columns) {
+            std::cerr << "Warning: Skipping row with incorrect column count. Expected " 
+                      << config.num_csv_columns << ", got " << row.size() << std::endl;
+            continue;
         }
+        
+        std::vector<float> features;
+        
+        // For neurips datasets, extract target (first column) and then features
+        if (is_neurips) {
+            try { 
+                labels.push_back(std::stof(row[config.target_index])); 
+            } catch (...) { 
+                labels.push_back(0.0f); 
+            }
+            
+            for (int j = config.feature_start; j < config.num_csv_columns; j++) {
+                try { features.push_back(std::stof(row[j])); }
+                catch (...) { features.push_back(0.0f); }
+            }
+        } 
+        // For credit datasets, extract features and then target (last column)
+        else {
+            for (int j = config.feature_start; j < config.feature_start + config.num_features_csv; j++) {
+                try { features.push_back(std::stof(row[j])); }
+                catch (...) { features.push_back(0.0f); }
+            }
+            
+            try { labels.push_back(std::stof(row[config.target_index])); }
+            catch (...) { labels.push_back(0.0f); }
+        }
+        
         feature_rows.push_back(features);
-        try { labels.push_back(std::stof(row[target_index])); }
-        catch (...) { labels.push_back(0.0f); }
     }
 
-    // *** New: Shuffle the data so that splits are random ***
+    // *** Shuffle the data so that splits are random ***
     shuffleData(feature_rows, labels);
 
-    auto data_options = torch::TensorOptions().dtype(torch::kFloat32);
-    long num_rows = feature_rows.size();
-    torch::Tensor features_tensor = torch::empty({num_rows, num_features_csv}, data_options);
-    auto features_accessor = features_tensor.accessor<float, 2>();
-    for (size_t i = 0; i < feature_rows.size(); i++) {
-        for (int j = 0; j < num_features_csv; j++) {
-            features_accessor[i][j] = feature_rows[i][j];
-        }
-    }
-    torch::Tensor labels_tensor = torch::from_blob(labels.data(), {num_rows, 1}, data_options).clone();
-
+    // Convert to Eigen matrices
+    auto[features_matrix, labels_matrix] = convertToEigenMatrices(feature_rows, labels);
+    long num_rows = features_matrix.cols(); // Number of samples
+    
+    std::cout << "Features matrix dimensions: " << features_matrix.rows() << "x" << features_matrix.cols() << std::endl;
+    std::cout << "Labels matrix dimensions: " << labels_matrix.rows() << "x" << labels_matrix.cols() << std::endl;
+    
     // ------------------------------
     // 3. Split data into train/val/test sets.
     // ------------------------------
     int64_t train_size = static_cast<int64_t>(train_ratio * num_rows);
     int64_t val_size = static_cast<int64_t>(val_ratio * num_rows);
     int64_t test_size = num_rows - train_size - val_size;
-    auto train_features = features_tensor.slice(0, 0, train_size);
-    auto train_labels = labels_tensor.slice(0, 0, train_size);
-    auto val_features = features_tensor.slice(0, train_size, train_size + val_size);
-    auto val_labels = labels_tensor.slice(0, train_size, train_size + val_size);
-    auto test_features = features_tensor.slice(0, train_size + val_size, num_rows);
-    auto test_labels = labels_tensor.slice(0, train_size + val_size, num_rows);
+    
+    Eigen::MatrixXd train_features = features_matrix.block(0, 0, features_matrix.rows(), train_size);
+    Eigen::MatrixXd train_labels = labels_matrix.block(0, 0, 1, train_size);
+    Eigen::MatrixXd val_features = features_matrix.block(0, train_size, features_matrix.rows(), val_size);
+    Eigen::MatrixXd val_labels = labels_matrix.block(0, train_size, 1, val_size);
+    Eigen::MatrixXd test_features = features_matrix.block(0, train_size + val_size, features_matrix.rows(), test_size);
+    Eigen::MatrixXd test_labels = labels_matrix.block(0, train_size + val_size, 1, test_size);
 
     // ------------------------------
     // 4. Partition features for left/right models.
@@ -114,38 +242,22 @@ int main() {
     // ------------------------------
     // 5. Create datasets and dataloaders.
     // ------------------------------
-    auto train_dataset = MyDataset(train_features, train_labels).map(torch::data::transforms::Stack<>());
-    auto val_dataset = MyDataset(val_features, val_labels).map(torch::data::transforms::Stack<>());
-    auto test_dataset = MyDataset(test_features, test_labels).map(torch::data::transforms::Stack<>());
-    auto train_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(
-        std::move(train_dataset), torch::data::DataLoaderOptions().batch_size(batch_size)
-    );
-    auto val_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
-        std::move(val_dataset), torch::data::DataLoaderOptions().batch_size(batch_size)
-    );
-    auto test_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
-        std::move(test_dataset), torch::data::DataLoaderOptions().batch_size(batch_size)
-    );
+    EigenDataset train_dataset(train_features, train_labels);
+    EigenDataset val_dataset(val_features, val_labels);
+    EigenDataset test_dataset(test_features, test_labels);
+    
+    EigenDataLoader train_loader(train_dataset, batch_size, true);
+    EigenDataLoader val_loader(val_dataset, batch_size, false);
+    EigenDataLoader test_loader(test_dataset, batch_size, false);
 
     // ------------------------------
     // 6. Initialize models and aggregator.
     // ------------------------------
     LRLocal lrLocalModel(left_input_dim, left_output_dim);
-    MLP4Local mlpLocalModel(right_input_dim, right_output_dim);
-    VFLAggregator vflAggregator(aggregator_input_dim, aggregator_output_dim);
-    lrLocalModel->train();
-    mlpLocalModel->train();
-    vflAggregator->train();
-
-    // ------------------------------
-    // 7. Setup optimizer and loss.
-    // ------------------------------
-    std::vector<torch::optim::OptimizerParamGroup> param_groups;
-    param_groups.push_back(lrLocalModel->parameters());
-    param_groups.push_back(mlpLocalModel->parameters());
-    param_groups.push_back(vflAggregator->parameters());
-    torch::optim::Adam optimizer(param_groups, torch::optim::AdamOptions(learning_rate));
-    auto criterion = torch::nn::BCEWithLogitsLoss();
+    int hidden_dim = 100;  // Add hidden dimension for MLP4Local
+    MLP4Local mlpLocalModel(right_input_dim, hidden_dim, right_output_dim);
+    std::vector<int> local_output_dims = {left_output_dim, right_output_dim};
+    VFLAggregator vflAggregator(local_output_dims, aggregator_output_dim);
 
     // Vectors to record epoch losses.
     std::vector<double> epoch_train_losses;
@@ -157,68 +269,107 @@ int main() {
     // ------------------------------
     std::cout << "Training for " << num_epochs << " epochs..." << std::endl;
     for (size_t epoch = 0; epoch < num_epochs; epoch++) {
-        lrLocalModel->train();
-        mlpLocalModel->train();
-        vflAggregator->train();
         double running_loss = 0.0;
         size_t total_samples = 0;
-        for (auto &batch : *train_loader) {
+        
+        for (const auto &batch : train_loader) {
             auto inputs = batch.data;
             auto targets = batch.target;
-            size_t bsize = inputs.size(0);
+            size_t bsize = inputs.cols();
             total_samples += bsize;
-            auto inputs_left = inputs.slice(/*dim=*/1, 0, split_col);
-            auto inputs_right = inputs.slice(/*dim=*/1, split_col, inputs.size(1));
-            auto local_out_left = lrLocalModel->forward(inputs_left);
-            auto local_out_right = mlpLocalModel->forward(inputs_right);
-            auto final_out = vflAggregator->forward({local_out_left, local_out_right});
-            optimizer.zero_grad();
-            auto loss = criterion(final_out, targets);
-            loss.backward();
-            optimizer.step();
-            running_loss += loss.template item<double>() * bsize;
+            
+            // Split inputs for local models
+            auto [inputs_left, inputs_right] = verticalSplit(inputs, split_col);
+            
+            std::cout << "Batch dimensions: " << inputs.rows() << "x" << inputs.cols() << std::endl;
+            std::cout << "Left split dimensions: " << inputs_left.rows() << "x" << inputs_left.cols() << std::endl;
+            std::cout << "Right split dimensions: " << inputs_right.rows() << "x" << inputs_right.cols() << std::endl;
+            
+            // Forward pass
+            auto local_out_left = lrLocalModel.forward(inputs_left);
+            auto local_out_right = mlpLocalModel.forward(inputs_right);
+            auto final_out = vflAggregator.forward({local_out_left, local_out_right});
+            
+            // Print dimensions before sigmoid
+            std::cout << "Before sigmoid - Output dimensions: " << final_out.rows() << "x" << final_out.cols() << std::endl;
+            
+            // Apply sigmoid activation for binary classification
+            Eigen::MatrixXd final_probs = sigmoid(final_out);
+            
+            // Print dimensions after sigmoid
+            std::cout << "After sigmoid - Probs dimensions: " << final_probs.rows() << "x" << final_probs.cols() << std::endl;
+            std::cout << "Target dimensions: " << targets.rows() << "x" << targets.cols() << std::endl;
+            
+            // Compute loss
+            double loss = bce_loss(final_probs, targets);
+            running_loss += loss * bsize;
+            
+            // Print dimensions for backward pass
+            std::cout << "Before creating grad_out" << std::endl;
+            
+            // Backward pass
+            auto grad_out = (final_probs - targets).array() * final_probs.array() * (1.0 - final_probs.array());
+            
+            std::cout << "Grad output dimensions: " << grad_out.rows() << "x" << grad_out.cols() << std::endl;
+            
+            // Backward pass through aggregator and get gradients for local models
+            auto local_grads = vflAggregator.backward(grad_out, {local_out_left, local_out_right});
+            
+            // Backward pass through local models with their respective gradients
+            lrLocalModel.backward(local_grads[0], learning_rate);
+            mlpLocalModel.backward(local_grads[1], learning_rate);
         }
+        
         double epoch_loss = running_loss / total_samples;
         epoch_train_losses.push_back(epoch_loss);
         std::cout << "Epoch " << (epoch + 1) << "/" << num_epochs 
                   << " - Training Loss: " << epoch_loss << std::endl;
 
         // Validation loop.
-        lrLocalModel->eval();
-        mlpLocalModel->eval();
-        vflAggregator->eval();
         double val_loss_sum = 0.0;
         size_t val_samples = 0;
-        for (auto &batch : *val_loader) {
+        
+        for (const auto &batch : val_loader) {
             auto inputs = batch.data;
             auto targets = batch.target;
-            size_t bsize = inputs.size(0);
+            size_t bsize = inputs.cols();
             val_samples += bsize;
-            auto inputs_left = inputs.slice(/*dim=*/1, 0, split_col);
-            auto inputs_right = inputs.slice(/*dim=*/1, split_col, inputs.size(1));
-            auto local_out_left = lrLocalModel->forward(inputs_left);
-            auto local_out_right = mlpLocalModel->forward(inputs_right);
-            auto final_out = vflAggregator->forward({local_out_left, local_out_right});
-            auto loss = criterion(final_out, targets);
-            val_loss_sum += loss.template item<double>() * bsize;
+            
+            // Split inputs for local models
+            auto [inputs_left, inputs_right] = verticalSplit(inputs, split_col);
+            
+            // Forward pass (no gradient tracking needed)
+            auto local_out_left = lrLocalModel.forward(inputs_left);
+            auto local_out_right = mlpLocalModel.forward(inputs_right);
+            auto final_out = vflAggregator.forward({local_out_left, local_out_right});
+            
+            // Apply sigmoid and compute loss
+            Eigen::MatrixXd final_probs = sigmoid(final_out);
+            double loss = bce_loss(final_probs, targets);
+            val_loss_sum += loss * bsize;
         }
+        
         double epoch_val_loss = val_loss_sum / val_samples;
         epoch_val_losses.push_back(epoch_val_loss);
         std::cout << "Epoch " << (epoch + 1) << "/" << num_epochs 
                   << " - Validation Loss: " << epoch_val_loss << std::endl;
 
         // Compute validation accuracy.
-        auto val_loader_seq = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
-            MyDataset(val_features, val_labels).map(torch::data::transforms::Stack<>()),
-            torch::data::DataLoaderOptions().batch_size(batch_size)
-        );
-        double current_val_accuracy = compute_accuracy(lrLocalModel, mlpLocalModel, vflAggregator, *val_loader_seq, split_col);
+        double current_val_accuracy = compute_accuracy(lrLocalModel, mlpLocalModel, vflAggregator, val_loader, split_col);
         std::cout << "Epoch " << (epoch + 1) << " - Validation Accuracy: " << current_val_accuracy * 100 << "%" << std::endl;
+        
         if (current_val_accuracy > best_val_accuracy) {
             best_val_accuracy = current_val_accuracy;
-            torch::save(lrLocalModel, run_folder_path + "/best_lrLocalModel.pt");
-            torch::save(mlpLocalModel, run_folder_path + "/best_mlpLocalModel.pt");
-            torch::save(vflAggregator, run_folder_path + "/best_vflAggregator.pt");
+            
+            // Save models for torch compatibility
+            std::vector<torch::Tensor> lr_params = lrLocalModel.get_parameters();
+            std::vector<torch::Tensor> mlp_params = mlpLocalModel.get_parameters();
+            std::vector<torch::Tensor> agg_params = vflAggregator.get_parameters();
+            
+            torch::save(lr_params, run_folder_path + "/best_lrLocalModel.pt");
+            torch::save(mlp_params, run_folder_path + "/best_mlpLocalModel.pt");
+            torch::save(agg_params, run_folder_path + "/best_vflAggregator.pt");
+            
             std::cout << "Checkpoint: Best model updated at epoch " << (epoch + 1) << std::endl;
         }
     }
@@ -227,53 +378,54 @@ int main() {
     // 9. Load best model for testing.
     // ------------------------------
     std::cout << "\nLoading best model for testing (Validation Accuracy: " << best_val_accuracy * 100 << "%)..." << std::endl;
-    torch::load(lrLocalModel, run_folder_path + "/best_lrLocalModel.pt");
-    torch::load(mlpLocalModel, run_folder_path + "/best_mlpLocalModel.pt");
-    torch::load(vflAggregator, run_folder_path + "/best_vflAggregator.pt");
+    
+    std::vector<torch::Tensor> lr_params;
+    std::vector<torch::Tensor> mlp_params;
+    std::vector<torch::Tensor> agg_params;
+    
+    torch::load(lr_params, run_folder_path + "/best_lrLocalModel.pt");
+    torch::load(mlp_params, run_folder_path + "/best_mlpLocalModel.pt");
+    torch::load(agg_params, run_folder_path + "/best_vflAggregator.pt");
+    
+    lrLocalModel.set_parameters(lr_params);
+    mlpLocalModel.set_parameters(mlp_params);
+    vflAggregator.set_parameters(agg_params);
 
     // ------------------------------
     // 10. Testing loop.
     // ------------------------------
-    lrLocalModel->eval();
-    mlpLocalModel->eval();
-    vflAggregator->eval();
     double test_loss_sum = 0.0;
     size_t test_samples = 0;
-    for (auto &batch : *test_loader) {
+    
+    for (const auto &batch : test_loader) {
         auto inputs = batch.data;
         auto targets = batch.target;
-        size_t bsize = inputs.size(0);
+        size_t bsize = inputs.cols();
         test_samples += bsize;
-        auto inputs_left = inputs.slice(/*dim=*/1, 0, split_col);
-        auto inputs_right = inputs.slice(/*dim=*/1, split_col, inputs.size(1));
-        auto local_out_left = lrLocalModel->forward(inputs_left);
-        auto local_out_right = mlpLocalModel->forward(inputs_right);
-        auto final_out = vflAggregator->forward({local_out_left, local_out_right});
-        auto loss = criterion(final_out, targets);
-        test_loss_sum += loss.template item<double>() * bsize;
+        
+        // Split inputs for local models
+        auto [inputs_left, inputs_right] = verticalSplit(inputs, split_col);
+        
+        // Forward pass
+        auto local_out_left = lrLocalModel.forward(inputs_left);
+        auto local_out_right = mlpLocalModel.forward(inputs_right);
+        auto final_out = vflAggregator.forward({local_out_left, local_out_right});
+        
+        // Apply sigmoid and compute loss
+        Eigen::MatrixXd final_probs = sigmoid(final_out);
+        double loss = bce_loss(final_probs, targets);
+        test_loss_sum += loss * bsize;
     }
+    
     double test_loss = test_loss_sum / test_samples;
     std::cout << "Test Loss: " << test_loss << std::endl;
 
     // ------------------------------
     // 11. Compute accuracies.
     // ------------------------------
-    auto train_loader_seq = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
-        MyDataset(train_features, train_labels).map(torch::data::transforms::Stack<>()),
-        torch::data::DataLoaderOptions().batch_size(batch_size)
-    );
-    auto val_loader_seq = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
-        MyDataset(val_features, val_labels).map(torch::data::transforms::Stack<>()),
-        torch::data::DataLoaderOptions().batch_size(batch_size)
-    );
-    auto test_loader_seq = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
-        MyDataset(test_features, test_labels).map(torch::data::transforms::Stack<>()),
-        torch::data::DataLoaderOptions().batch_size(batch_size)
-    );
-
-    double train_accuracy = compute_accuracy(lrLocalModel, mlpLocalModel, vflAggregator, *train_loader_seq, split_col);
-    double val_accuracy = compute_accuracy(lrLocalModel, mlpLocalModel, vflAggregator, *val_loader_seq, split_col);
-    double test_accuracy = compute_accuracy(lrLocalModel, mlpLocalModel, vflAggregator, *test_loader_seq, split_col);
+    double train_accuracy = compute_accuracy(lrLocalModel, mlpLocalModel, vflAggregator, train_loader, split_col);
+    double val_accuracy = compute_accuracy(lrLocalModel, mlpLocalModel, vflAggregator, val_loader, split_col);
+    double test_accuracy = compute_accuracy(lrLocalModel, mlpLocalModel, vflAggregator, test_loader, split_col);
 
     std::cout << "Final Metrics:" << std::endl;
     std::cout << "Train Accuracy: " << train_accuracy * 100 << "%" << std::endl;
@@ -307,11 +459,11 @@ int main() {
         log_file << "==================== RUN DETAILS ====================\n\n";
         log_file << "Hyperparameters:\n";
         log_file << "------------------------------------------------------\n";
-        log_file << "csv_path: " << csv_path << "\n";
-        log_file << "num_csv_columns: " << num_csv_columns << "\n";
-        log_file << "feature_start: " << feature_start << "\n";
-        log_file << "num_features_csv: " << num_features_csv << "\n";
-        log_file << "target_index: " << target_index << "\n";
+        log_file << "csv_path: " << config.csv_path << "\n";
+        log_file << "num_csv_columns: " << config.num_csv_columns << "\n";
+        log_file << "feature_start: " << config.feature_start << "\n";
+        log_file << "num_features_csv: " << config.num_features_csv << "\n";
+        log_file << "target_index: " << config.target_index << "\n";
         log_file << "train_ratio: " << train_ratio << "\n";
         log_file << "val_ratio: " << val_ratio << "\n";
         log_file << "test_ratio: " << test_ratio << "\n";
